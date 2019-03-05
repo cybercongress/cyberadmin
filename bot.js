@@ -86,8 +86,8 @@ wsCyber.addEventListener('message', async (msg) => {
 });
 
 function sendJailChangedMessage(address) {
-    let jailed = newState[address].jailed ? "jailed. Go back online ASAP, man!" : "unjailed. Welcome back validator!";
-    let msg = `Validator ` + newState[address].description.moniker + `now is : ` + jailed;
+    let jailed = newState[address].jailed ? "jailed 🔥. Go back online ASAP, man!" : "unjailed 😇. Welcome back validator!";
+    let msg = `Validator ` + newState[address].description.moniker + ` 👽 now is : ` + jailed;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
         bot.telegram.sendMessage(userId, msg);
@@ -95,8 +95,8 @@ function sendJailChangedMessage(address) {
 }
 
 function sendDelegationChangedMessage(address) {
-    let msg = `Validator ` + newState[address].description.moniker + ` shares changed from: ` +
-    lastState[address].delegator_shares + " CYB's to " + newState[address].delegator_shares + " CYB's";
+    let msg = `Validator ` + newState[address].description.moniker + ` 👽 shares changed from: ` +
+    parseInt(lastState[address].delegator_shares) + " CYB's to " + parseInt(newState[address].delegator_shares) + " CYB's 🚁";
     let userList = dataService.getUserList();
     userList.forEach(userId => {
         bot.telegram.sendMessage(userId, msg);
@@ -107,7 +107,20 @@ function sendStatusChangedMessage(address) { }
 
 bot.command('start', ctx => {
     dataService.registerUser(ctx);
-    let startMsg = `Hello humanoids, I'm cyberadmin robot which maintains CYBER network. I will
-    send you notifications about network's state and you may also ask me about network stats with /stats anytime`
+    let startMsg = `Hello humanoids 👻, I'm cyberadmin robot which maintains 📡 CYBER network. I will ⚡️
+send you notifications 📥 about network's state and you may also ask me about network stats 📊 with /stats anytime`
     ctx.reply(startMsg);
+});
+
+bot.command('stats', ctx => {
+    let statsMsg;
+    try {
+        request(config.cybernodeRPC+'/index_stats', function (error, response, data) {
+            data = JSON.parse(data).result;
+            statsMsg = `Knowledge graph 🚀 have ` + data.cidsCount + ` ☝ CIDs, connected by ` + data.linksCount + ` 🔗 links powered by ` + data.accsCount + ` web3 agents.` + `\nNetwork on block ` + data.height + ` 🕐 in consensus between ` + Object.keys(lastState).length + ` 👽 validators.`;
+            ctx.reply(statsMsg);
+        });
+    } catch (e) {
+        console.log(e);
+    }
 });
