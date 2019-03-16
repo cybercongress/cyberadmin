@@ -61,19 +61,23 @@ wsCyber.addEventListener('message', async (msg) => {
             changes = diff(lastState, newState);
             if (changes.length != 0) {
                 changes.forEach(function(item) {
-                    switch(item.path[1]) {
-                        case 'jailed':
-                            sendJailChangedMessage(item.path[0]);
-                            break;
-                        case 'delegator_shares':
-                            sendDelegationChangedMessage(item.path[0]);
-                            break;
-                        case 'status':
-                            sendStatusChangedMessage(item.path[0]);
-                            break;
-                        default:
-                            console.log("not implemented handler");
-                            break;
+                    if (item.op == 'replace') {
+                        switch(item.path[1]) {
+                            case 'jailed':
+                                sendJailChangedMessage(item.path[0]);
+                                break;
+                            case 'delegator_shares':
+                                sendDelegationChangedMessage(item.path[0]);
+                                break;
+                            case 'status':
+                                sendStatusChangedMessage(item.path[0]);
+                                break;
+                            default:
+                                console.log("not implemented handler");
+                                break;
+                        }
+                    } else if (item.op == 'add') {
+                        sendNewValidatorAdded(item.path[0]);
                     }
                 });
             };
@@ -87,7 +91,7 @@ wsCyber.addEventListener('message', async (msg) => {
 
 function sendJailChangedMessage(address) {
     let jailed = newState[address].jailed ? "jailed 🔥. Go back online ASAP, man!" : "unjailed 😇. Welcome back validator!";
-    let msg = `Validator ` + newState[address].description.moniker + ` 👽 now is : ` + jailed;
+    let msg = `Validator ` + newState[address].description.moniker + ` 👽  now is ` + jailed;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
         bot.telegram.sendMessage(userId, msg);
@@ -105,10 +109,17 @@ function sendDelegationChangedMessage(address) {
 
 function sendStatusChangedMessage(address) { }
 
+function sendNewValidatorAdded(address) {
+    let msg = ` New validator ` + newState[address].description.moniker + ` 👽  with stake ` + parseInt(newState[address].delegator_shares) + ` CYB's joined us 🔥 ! Welcome to CYBER and The Great Web 😇`;
+    let userList = dataService.getUserList();
+    userList.forEach(userId => {
+        bot.telegram.sendMessage(userId, msg);
+    });
+}
+
 bot.command('start', ctx => {
     dataService.registerUser(ctx);
-    let startMsg = `Hello humanoids 👻, I'm cyberadmin robot which maintains 📡 CYBER network. I will ⚡️
-send you notifications 📥 about network's state and you may also ask me about network stats 📊 with /stats anytime`
+    let startMsg = `Hello humanoids 👻, I'm cyberadmin robot which maintains 📡 CYBER network. I will ⚡️ send you notifications 📥 about network's state and you may also ask me about network stats 📊 with /stats anytime`
     ctx.reply(startMsg);
 });
 
@@ -117,8 +128,12 @@ bot.command('stats', ctx => {
     try {
         request(config.cybernodeRPC+'/index_stats', function (error, response, data) {
             data = JSON.parse(data).result;
-            statsMsg = `Knowledge graph 🚀 have ` + data.cidsCount + ` ☝ CIDs, connected by ` + data.linksCount + ` 🔗 links powered by ` + data.accsCount + ` web3 agents.` + `\nNetwork on block ` + data.height + ` 🕐 in consensus between ` + Object.keys(lastState).length + ` 👽 validators.`;
-            ctx.reply(statsMsg);
+            statsMsg = `Knowledge graph 🚀 have ` + data.cidsCount + ` ☝ CIDs, connected by ` + data.linksCount + ` links 🔗 powered by ` + data.accsCount + ` web3 agents.` + `\nNetwork on block ` + data.height + ` 🕐 in consensus between ` + Object.keys(lastState).length + ` 👽 validators.`;
+            request(config.cybernodeRPC+'/status', function (error, response, data) {
+                data = JSON.parse(data).result;
+                statsMsg += `\nI'm Cyberadmin and I'm administrating ` + data.node_info.network + ` network of CYBER`;
+                ctx.reply(statsMsg);
+            });
         });
     } catch (e) {
         console.log(e);
