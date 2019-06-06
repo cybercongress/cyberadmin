@@ -5,6 +5,9 @@ const ReconnectingWebSocket = require('reconnecting-websocket');
 const { diff } = require('just-diff');
 const dataService = require('./dataService');
 const config = require('./config.json');
+const fs = require('fs');
+const _ = require('lodash');
+
 
 const wsOptions = {
   WebSocket: WS,
@@ -32,6 +35,8 @@ bot.launch();
 let lastState = {};
 let newState = {};
 let changes = [];
+let lastBlockTimestamp;
+let lastBlockTime;
 
 const wsCyber = new ReconnectingWebSocket(config.cyberdnodeWS, [], wsOptions);
 
@@ -39,6 +44,7 @@ wsCyber.addEventListener('open', async () => {
     try { 
         request(config.cybernodeRPC+'/staking/validators', function (error, response, data) {
             data = JSON.parse(data).result;
+            // need to cast alert if diff more than one block for debugging
             for(i = 0; i < data.length; i++) {
                 newState[data[i].operator_address] = data[i];
             }
@@ -52,7 +58,10 @@ wsCyber.addEventListener('open', async () => {
 
 wsCyber.addEventListener('message', async (msg) => {
     try {
-        // console.log(JSON.parse(msg.data).result.data.value.header.last_block_id.hash);
+        // console.log(JSON.parse(msg.data).result.data.value.header.time);
+        let blockTime = Date.parse(JSON.parse(msg.data).result.data.value.header.time) / 1000
+        lastBlockTime = blockTime - lastBlockTimestamp
+        lastBlockTimestamp = blockTime;
         request(config.cybernodeRPC+'/staking/validators', function (error, response, data) {
             data = JSON.parse(data).result;
             for(i = 0; i < data.length; i++) {
@@ -127,12 +136,21 @@ bot.command('stats', ctx => {
     let statsMsg;
     try {
         request(config.cybernodeRPC+'/index_stats', function (error, response, data) {
+            let rawdata = fs.readFileSync('gpu');  
+            gpu = (new String(rawdata)).match("[0-9]{1,8}[M][i][B]");  
             data = JSON.parse(data).result;
-            statsMsg = `Knowledge graph 🚀 have ` + data.cidsCount + ` ☝ CIDs, connected by ` + data.linksCount + ` links 🔗 powered by ` + data.accsCount + ` web3 agents.` + `\nNetwork on block ` + data.height + ` 🕐 in consensus between ` + Object.keys(lastState).length + ` 👽 validators.`;
+            let jailed = _.countBy(lastState, 'jailed');
+            statsMsg = 'Knowledge graph have *' + data.cidsCount + `* CIDs, connected by *` + data.linksCount + `* links.`
+            statsMsg += `\nNetwork on block *` + data.height + `*, powered by *` + data.accsCount + `* web3 agents.`
+            statsMsg += `\nIn consensus between *` + Object.keys(lastState).length + `* validators: *` + jailed['false'] + `* active / *` + jailed['true'] + `* jailed`;
             request(config.cybernodeRPC+'/status', function (error, response, data) {
                 data = JSON.parse(data).result;
-                statsMsg += `\nI'm Cyberadmin and I'm administrating ` + data.node_info.network + ` network of CYBER`;
-                ctx.reply(statsMsg);
+                statsMsg += `\nAverage GPU memory load: *` + gpu + `*.`
+                statsMsg += `\nLast block: *` + Math.round(lastBlockTime*100) / 100 + `* seconds.`
+                let delay = Math.round((Date.now() / 1000 - lastBlockTimestamp) * 100) / 100;
+                if (delay > 10.0) statsMsg += `\nAlert! Last block was: *` + delay + `* seconds ago. @litvintech`
+                statsMsg += `\nI'm Cyberadmin of *` + data.node_info.network + `* testnet network of *InterPlanetary Search Engine*`;
+                ctx.replyWithMarkdown(statsMsg);
             });
         });
     } catch (e) {

@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "just-diff": "^2.2.0",
+    "lodash": "^4.17.11",
     "reconnecting-websocket": "^4.1.10",
     "request": "^2.88.0",
     "telegraf": "^3.27.1",
