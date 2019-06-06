@@ -7,6 +7,8 @@ const dataService = require('./dataService');
 const config = require('./config.json');
 const fs = require('fs');
 const _ = require('lodash');
+const extra = require('telegraf/extra')
+const markup = extra.markdown()
 
 
 const wsOptions = {
@@ -68,6 +70,7 @@ wsCyber.addEventListener('message', async (msg) => {
                 newState[data[i].operator_address] = data[i];
             }
             changes = diff(lastState, newState);
+            console.log("changes", changes);
             if (changes.length != 0) {
                 changes.forEach(function(item) {
                     if (item.op == 'replace') {
@@ -98,37 +101,37 @@ wsCyber.addEventListener('message', async (msg) => {
     }
 });
 
-function sendJailChangedMessage(address) {
-    let jailed = newState[address].jailed ? "jailed 🔥. Go back online ASAP, man!" : "unjailed 😇. Welcome back validator!";
-    let msg = `Validator ` + newState[address].description.moniker + ` 👽  now is ` + jailed;
+async function sendJailChangedMessage(address) {
+    let jailed = newState[address].jailed ? "jailed. Go back online ASAP!" : "unjailed. Welcome back, validator!";
+    let msg = `Validator *` + newState[address].description.moniker + `* now is ` + jailed;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
-        bot.telegram.sendMessage(userId, msg);
+        bot.telegram.sendMessage(userId, msg, markup);
     });
 }
 
-function sendDelegationChangedMessage(address) {
-    let msg = `Validator ` + newState[address].description.moniker + ` 👽 shares changed from: ` +
-    parseInt(lastState[address].delegator_shares) + " CYB's to " + parseInt(newState[address].delegator_shares) + " CYB's 🚁";
+async function sendDelegationChangedMessage(address) {
+    let msg = `Validator ` + newState[address].description.moniker + ` shares changed from: ` +
+    parseInt(lastState[address].delegator_shares) / 1000000000 + " GCYB's to *" + parseInt(newState[address].delegator_shares) / 1000000000 + "* GCYB's";
     let userList = dataService.getUserList();
     userList.forEach(userId => {
-        bot.telegram.sendMessage(userId, msg);
+        bot.telegram.sendMessage(userId, msg, markup);
     });
 }
 
 function sendStatusChangedMessage(address) { }
 
-function sendNewValidatorAdded(address) {
-    let msg = ` New validator ` + newState[address].description.moniker + ` 👽  with stake ` + parseInt(newState[address].delegator_shares) + ` CYB's joined us 🔥 ! Welcome to CYBER and The Great Web 😇`;
+async function sendNewValidatorAdded(address) {
+    let msg = `New validator *` + newState[address].description.moniker + `* with stake *` + parseInt(newState[address].delegator_shares) / 1000000000 + `* GCYB's joined us.\nWelcome to *InterPlanetary Search Engine* and The Great Web! #fuckgoogle`;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
-        bot.telegram.sendMessage(userId, msg);
+        bot.telegram.sendMessage(userId, msg, markup);
     });
 }
 
 bot.command('start', ctx => {
     dataService.registerUser(ctx);
-    let startMsg = `Hello humanoids 👻, I'm cyberadmin robot which maintains 📡 CYBER network. I will ⚡️ send you notifications 📥 about network's state and you may also ask me about network stats 📊 with /stats anytime`
+    let startMsg = `Hi there, humanoids. I'm cyberadmin Robot which maintains IPSE network. I'm going to send you notifications about network's state and you may also ask me about network stats with /stats anytime`
     ctx.reply(startMsg);
 });
 
