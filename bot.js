@@ -145,13 +145,13 @@ bot.command('stats', ctx => {
             let jailed = _.countBy(lastState, 'jailed');
             statsMsg = 'Knowledge graph have *' + data.cidsCount + `* CIDs, connected by *` + data.linksCount + `* links.`
             statsMsg += `\nNetwork on block *` + data.height + `*, powered by *` + data.accsCount + `* web3 agents.`
-            statsMsg += `\nIn consensus between *` + Object.keys(lastState).length + `* validators: *` + jailed['false'] + `* active / *` + jailed['true'] + `* jailed`;
+            statsMsg += `\nIn consensus between *` + jailed['false'] + `* validators.`
             request(config.cybernodeRPC+'/status', function (error, response, data) {
                 data = JSON.parse(data).result;
                 statsMsg += `\nAverage GPU memory load: *` + gpu + `*.`
                 statsMsg += `\nLast block: *` + Math.round(lastBlockTime*100) / 100 + `* seconds.`
-                let delay = Math.round((Date.now() / 1000 - lastBlockTimestamp) * 100) / 100;
-                if (delay > 10.0) statsMsg += `\nAlert! Last block was: *` + delay + `* seconds ago. @litvintech`
+                // let delay = Math.round((Date.now() / 1000 - lastBlockTimestamp) * 100) / 100;
+                // if (delay > 10.0) statsMsg += `\nAlert! Last block was: *` + delay + `* seconds ago. @litvintech`
                 statsMsg += `\nI'm Cyberadmin of *` + data.node_info.network + `* testnet network of *InterPlanetary Search Engine*`;
                 ctx.replyWithMarkdown(statsMsg);
             });
