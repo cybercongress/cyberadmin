@@ -102,7 +102,7 @@ wsCyber.addEventListener('message', async (msg) => {
 
 async function sendJailChangedMessage(address) {
     let jailed = newState[address].jailed ? "jailed. Go back online ASAP!" : "unjailed. Welcome back, Hero!";
-    let msg = `Validator *` + newState[address].description.moniker + `* now is ` + jailed;
+    let msg = `The Hero *` + newState[address].description.moniker + `* is now ` + jailed;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
         bot.telegram.sendMessage(userId, msg, markup);
@@ -110,7 +110,7 @@ async function sendJailChangedMessage(address) {
 }
 
 async function sendDelegationChangedMessage(address) {
-    let msg = `Validator ` + newState[address].description.moniker + ` shares changed from: ` +
+    let msg = `newState[address].description.moniker + Hero ` +  ` shares, have changed from: ` +
     parseInt(lastState[address].delegator_shares) / 1000000000 + " GEUL's to *" + parseInt(newState[address].delegator_shares) / 1000000000 + "* GEUL's";
     let userList = dataService.getUserList();
     userList.forEach(userId => {
@@ -121,7 +121,7 @@ async function sendDelegationChangedMessage(address) {
 function sendStatusChangedMessage(address) { }
 
 async function sendNewValidatorAdded(address) {
-    let msg = `New Hero *` + newState[address].description.moniker + `* with stake *` + parseInt(newState[address].delegator_shares) / 1000000000 + `* GEUL's joined us.\nWelcome to *Cyber* and The Great Web! #fuckgoogle`;
+    let msg = `A new Hero joined us! *` + newState[address].description.moniker + `* with a stake of *` + parseInt(newState[address].delegator_shares) / 1000000000 + `* GEUL's.\nWelcome to *Cyber* and The Great Web! #fuckgoogle`;
     let userList = dataService.getUserList();
     userList.forEach(userId => {
         bot.telegram.sendMessage(userId, msg, markup);
@@ -130,7 +130,7 @@ async function sendNewValidatorAdded(address) {
 
 bot.command('start', ctx => {
     dataService.registerUser(ctx);
-    let startMsg = `Hi there, humanoids. I'm Cyberadmin Robot which maintains Cyber network. I'm going to send you notifications about network's state and you may also ask me about network stats with /stats anytime`
+    let startMsg = `Hi there, humanoids. I'm Cyberadmin, a Robot which maintains the Cyber network. I'm going to send you important notifications about the state of the network. You may also ask me about network stats at anytime with /stats`
     ctx.reply(startMsg);
 });
 
@@ -140,15 +140,15 @@ bot.command('stats', ctx => {
         request(config.cybernodeRPC+'/index_stats', function (error, response, data) {
             data = JSON.parse(data).result;
             let jailed = _.countBy(lastState, 'jailed');
-            statsMsg = 'Knowledge graph have *' + data.cidsCount + `* objects, connected by *` + data.linksCount + `* cyberlinks.`
-            statsMsg += `\nNetwork on block *` + data.height + `*, powered by *` + data.accsCount + `* agents.`
-            statsMsg += `\nIn consensus between *` + jailed['false'] + `* validators.`
+            statsMsg = 'The Knowledge graph has *' + data.cidsCount + `* objects, united by *` + data.linksCount + `* cyberlinks.`
+            statsMsg += `\nThe Network is on block *` + data.height + `*, powered by *` + data.accsCount + `* masters.`
+            statsMsg += `\nIn consensus between *` + jailed['false'] + `* heroes.`
             request(config.cybernodeRPC+'/status', function (error, response, data) {
                 data = JSON.parse(data).result;
                 statsMsg += `\nLast block: *` + Math.round(lastBlockTime*100) / 100 + `* seconds.`
                 let delay = Math.round((Date.now() / 1000 - lastBlockTimestamp) * 100) / 100;
                 if (delay > 10.0) statsMsg += `\nAlert! Last block was: *` + delay + `* seconds ago. @litvintech @mrlp4`
-                statsMsg += `\nI'm сyberadmin of *` + data.node_info.network + `* network of *Cyber*`;
+                statsMsg += `\nI'm сyberadmin of the *` + data.node_info.network + `* network.`;
                 ctx.replyWithMarkdown(statsMsg);
             });
         });
